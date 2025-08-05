@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dubai Travel Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="chat-wrapper">
+        <header>
+            <h1>Dubai Travel Assistant 🧳</h1>
+            <p>Your AI-powered guide to explore Dubai</p>
+        </header>
+
+        <div id="chat-box" class="chat-box"></div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Ask me about attractions, activities, or tips..." autocomplete="off" onkeydown="handleEnter(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        <div id="loader" class="loader hidden"></div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById("user-input");
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatBox = document.getElementById("chat-box");
+            const loader = document.getElementById("loader");
+
+            chatBox.innerHTML += `<div class="message user">
+                <div class="bubble">
+                    <strong>You:</strong> ${message}
+                    <span class="timestamp">${new Date().toLocaleTimeString()}</span>
+                </div>
+            </div>`;
+
+            input.value = "";
+            loader.classList.remove("hidden");
+
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await res.json();
+            loader.classList.add("hidden");
+
+            chatBox.innerHTML += `<div class="message bot">
+                <div class="bubble">
+                    <strong>Bot:</strong> <span class="typing-text">${data.response}</span>
+                    <span class="timestamp">${new Date().toLocaleTimeString()}</span>
+                </div>
+            </div>`;
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function handleEnter(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+
+        window.onload = () => {
+                fetch("/chat", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: "__start__" })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const chatBox = document.getElementById("chat-box");
+                    chatBox.innerHTML += `<div class="message bot">
+                        <div class="bubble">
+                            <strong>Bot:</strong> <div>${data.response}</div>
+                            <span class="timestamp">${new Date().toLocaleTimeString()}</span>
+                        </div>
+                    </div>`;
+                });
+            };
+
+    </script>
+    
+</body>
+</html>
